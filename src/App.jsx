@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useMsal } from '@azure/msal-react';
+import { loginRequest } from './authConfig';
 
 const App = () => {
   const [view, setView] = useState('home');
@@ -12,13 +14,19 @@ const App = () => {
   const [followUpData, setFollowUpData] = useState([]);
   const [filters, setFilters] = useState({});
 
-  const entityOptions = [1207, 3188, 1012, 1194, 380, 519,
-    1209, 1310, 3124, 1180, 1467, 466, 3121, 477, 1456, 1287,
-    1396, 3168, 417, 3583, 1698, 1443, 1662, 1204, 478, 1029,
-    1471, 1177, 1253, 1580, 3592, 1285, 3225, 1101, 1395, 1203,
-    1247, 1083, 1216, 1190, 3325, 3143, 3223, 1619];
-  const months = ['January', 'February', 'March', "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"];
+  const { instance, accounts } = useMsal();
+
+  const signIn = () => {
+    instance.loginPopup(loginRequest).catch(console.error);
+  };
+
+  const getAccessToken = async () => {
+    const account = accounts[0];
+    return instance.acquireTokenSilent({ ...loginRequest, account });
+  };
+
+  const entityOptions = [1207, 3188, 1012];
+  const months = ['January', 'February', 'March'];
   const years = ['2025', '2026'];
 
   useEffect(() => {
@@ -49,12 +57,10 @@ const App = () => {
     setData(updated);
   };
 
-  // ✅ Uploads file but DOES NOT overwrite text value
   const handleFileUpload = (e, data, setData, rowIdx, key) => {
     const file = e.target.files[0];
     if (file) {
       console.log(`📁 File uploaded for row ${rowIdx}, column ${key}: ${file.name}`);
-      // optionally: updated[rowIdx][`${key}_file`] = file.name;
     }
   };
 
@@ -189,8 +195,7 @@ const App = () => {
         { key: 'plant', label: 'Plant' },
         { key: 'customer', label: 'Customer' },
         { key: 'product', label: 'Product' },
-        { key: 'incoterms', label: 'Incoterms' },
-        { key: 'walkthrough', label: 'Walkthrough' }
+        { key: 'incoterms', label: 'Incoterms' }
       ];
       return renderUploadTable(headers, poPodData, setPoPodData);
     }
@@ -221,7 +226,14 @@ const App = () => {
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'Segoe UI', backgroundColor: '#f4fafd', maxWidth: '1200px', margin: '0 auto' }}>
-      <h2 style={{ color: '#007C91' }}>PWC Testing Automation</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <h2 style={{ color: '#007C91' }}>PWC Testing Automation</h2>
+        <img src="https://upload.wikimedia.org/wikipedia/commons/8/8f/MSD_Sharp_and_Dohme_logo.svg" alt="MSD Logo" style={{ height: '50px' }} />
+      </div>
+
+      <button onClick={signIn} style={{ marginBottom: '1rem' }}>
+        Sign in with Microsoft
+      </button>
 
       {view === 'home' && (
         <>
